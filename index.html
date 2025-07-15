@@ -1,66 +1,80 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>EA License Check</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FLASH THE BOT - License Validation</title>
   <style>
-    body { font-family: Arial; padding: 20px; background: #f4f6f8; }
-    input, button { padding: 10px; margin-top: 10px; width: 100%; }
-    #result { margin-top: 20px; }
-    #downloadEA { display: none; margin-top: 20px; background: green; color: white; }
+    body {
+      font-family: sans-serif;
+      background-color: #f3f4f6;
+      text-align: center;
+      padding: 40px;
+    }
+    .container {
+      max-width: 400px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    input, button {
+      padding: 10px;
+      width: 100%;
+      margin-top: 15px;
+      font-size: 16px;
+    }
+    #downloadEA {
+      display: none;
+      margin-top: 20px;
+    }
+    .error {
+      color: red;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
-  <h2>Enter License Key</h2>
-  <input type="text" id="licenseInput" placeholder="Enter your license key" />
-  <button onclick="checkLicense()">Validate License</button>
+  <div class="container">
+    <h2>FLASH THE BOT</h2>
+    <p>Enter your license key to download the EA file</p>
+    <input type="text" id="licenseInput" placeholder="Enter license key" />
+    <button onclick="validateLicense()">Validate License</button>
+    <div class="error" id="errorMsg"></div>
 
-  <div id="result"></div>
-  <a id="downloadEA" href="https://your-vercel-app.vercel.app/FLASHBOT.ex5" download>Download FLASHBOT EA (.ex5)</a>
+    <div id="downloadEA">
+      <p>✅ License validated!</p>
+      <a href="/FLASHBOT.ex5" download>⬇️ Download EA File</a>
+    </div>
+  </div>
 
   <script>
-    const supabase = supabase.createClient(
-      "https://gqtfbteiocwzievktwej.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxdGZidGVpb2N3emlldmt0d2VqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NjA1NTMsImV4cCI6MjA2NzAzNjU1M30.FnvC_rBqdflL1zjNuYXK5-FIXLGKXs8eAFm7WwtKQ_c"
-    );
+    const VALID_KEYS = [
+      "LICENSE-KEY-001",
+      "FLASH-BOT-ABC123",
+      "DEMO-KEY-XYZ"
+    ];
 
-    async function checkLicense() {
-      const licenseKey = document.getElementById("licenseInput").value.trim();
-      const resultDiv = document.getElementById("result");
-      const downloadLink = document.getElementById("downloadEA");
+    function validateLicense() {
+      const key = document.getElementById("licenseInput").value.trim();
+      const errorMsg = document.getElementById("errorMsg");
+      const downloadBox = document.getElementById("downloadEA");
+      errorMsg.textContent = "";
+      downloadBox.style.display = "none";
 
-      resultDiv.textContent = "";
-      downloadLink.style.display = "none";
-
-      const { data, error } = await supabase
-        .from("licenses")
-        .select("*")
-        .eq("license_key", licenseKey)
-        .single();
-
-      if (error || !data) {
-        resultDiv.textContent = "❌ Invalid license key.";
+      if (!key) {
+        errorMsg.textContent = "Please enter a license key.";
         return;
       }
 
-      const isValid = data.is_valid;
-      const expiry = new Date(data.expiry_date);
-      const today = new Date();
-
-      if (!isValid) {
-        resultDiv.textContent = "⛔ License key is paused or disabled.";
-      } else if (expiry < today) {
-        resultDiv.textContent = "⚠️ License key has expired.";
-      } else {
-        resultDiv.textContent = "✅ License is valid. You may download the EA below.";
-        downloadLink.style.display = "inline-block";
-
-        // Optional: update usage_count
-        await supabase.from("licenses").update({
-          usage_count: (data.usage_count || 0) + 1
-        }).eq("license_key", licenseKey);
+      if (!VALID_KEYS.includes(key)) {
+        errorMsg.textContent = "❌ Invalid license key.";
+        return;
       }
+
+      // ✅ Valid key
+      downloadBox.style.display = "block";
     }
   </script>
 </body>
