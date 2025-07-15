@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>EA License Check</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #f4f6f8; }
+    input, button { padding: 10px; margin-top: 10px; width: 100%; }
+    #result { margin-top: 20px; }
+    #downloadEA { display: none; margin-top: 20px; background: green; color: white; }
+  </style>
+</head>
+<body>
+  <h2>Enter License Key</h2>
+  <input type="text" id="licenseInput" placeholder="Enter your license key" />
+  <button onclick="checkLicense()">Validate License</button>
+
+  <div id="result"></div>
+  <a id="downloadEA" href="https://your-vercel-app.vercel.app/FLASHBOT.ex5" download>Download FLASHBOT EA (.ex5)</a>
+
+  <script>
+    const supabase = supabase.createClient(
+      "https://gqtfbteiocwzievktwej.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxdGZidGVpb2N3emlldmt0d2VqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NjA1NTMsImV4cCI6MjA2NzAzNjU1M30.FnvC_rBqdflL1zjNuYXK5-FIXLGKXs8eAFm7WwtKQ_c"
+    );
+
+    async function checkLicense() {
+      const licenseKey = document.getElementById("licenseInput").value.trim();
+      const resultDiv = document.getElementById("result");
+      const downloadLink = document.getElementById("downloadEA");
+
+      resultDiv.textContent = "";
+      downloadLink.style.display = "none";
+
+      const { data, error } = await supabase
+        .from("licenses")
+        .select("*")
+        .eq("license_key", licenseKey)
+        .single();
+
+      if (error || !data) {
+        resultDiv.textContent = "❌ Invalid license key.";
+        return;
+      }
+
+      const isValid = data.is_valid;
+      const expiry = new Date(data.expiry_date);
+      const today = new Date();
+
+      if (!isValid) {
+        resultDiv.textContent = "⛔ License key is paused or disabled.";
+      } else if (expiry < today) {
+        resultDiv.textContent = "⚠️ License key has expired.";
+      } else {
+        resultDiv.textContent = "✅ License is valid. You may download the EA below.";
+        downloadLink.style.display = "inline-block";
+
+        // Optional: update usage_count
+        await supabase.from("licenses").update({
+          usage_count: (data.usage_count || 0) + 1
+        }).eq("license_key", licenseKey);
+      }
+    }
+  </script>
+</body>
+</html>

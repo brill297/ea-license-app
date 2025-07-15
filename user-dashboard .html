@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>User Dashboard</title>
+  <style>
+    body { font-family: Arial; background: #f4f4f4; padding: 20px; }
+    .box { background: #fff; max-width: 600px; margin: auto; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px #ccc; }
+    input, button { width: 100%; padding: 10px; margin: 10px 0; }
+    button { background: #007bff; color: #fff; border: none; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>🔑 Check License Key</h2>
+    <input type="text" id="key" placeholder="Enter your license key" />
+    <button onclick="checkKey()">Check</button>
+    <p id="result"></p>
+  </div>
+
+  <script>
+    const validKeys = [
+      "LICENSE-KEY-001",
+      "DEMO-KEY-XYZ",
+      "FLASH-BOT-ABC123"
+    ];
+
+    function checkKey() {
+      const key = document.getElementById("key").value.trim().toUpperCase();
+      const result = document.getElementById("result");
+
+      if (validKeys.includes(key)) {
+        result.textContent = "✅ License key is valid and active.";
+        result.style.color = "green";
+      } else {
+        result.textContent = "❌ Invalid or expired license key.";
+        result.style.color = "red";
+      }
+    }
+  </script>
+</body>
+</html>
