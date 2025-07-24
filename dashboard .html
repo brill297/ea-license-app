@@ -1,110 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>EA Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: Arial; padding: 20px; background: #f9f9f9; }
-    .card { background: white; padding: 20px; border-radius: 10px; max-width: 500px; margin: auto; box-shadow: 0 0 10px #ddd; }
-    input, select, button { width: 100%; padding: 10px; margin: 10px 0; }
-    .hidden { display: none; }
+    body { font-family: Arial; padding: 40px; max-width: 500px; margin: auto; }
+    h1 { text-align: center; }
+    label { display: block; margin-top: 20px; }
+    input, select, button { width: 100%; padding: 10px; font-size: 16px; }
+    #status { margin-top: 20px; text-align: center; }
+    .logout { margin-top: 30px; background: red; color: white; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h2>EA Settings Dashboard</h2>
-    <input type="text" id="licenseKey" placeholder="Enter License Key">
-    <button onclick="validateLicense()">Load Settings</button>
+  <h1>EA Settings</h1>
 
-    <div id="settingsForm" class="hidden">
-      <label>Lot Size:</label>
-      <input type="number" id="lotSize" step="0.01">
+  <label>Lot Size</label>
+  <input type="number" id="lotSize" step="0.01" min="0.01" />
 
-      <label>Stop Loss:</label>
-      <input type="number" id="stopLoss">
+  <label>Stop Loss (pips)</label>
+  <input type="number" id="stopLoss" />
 
-      <label>Take Profit:</label>
-      <input type="number" id="takeProfit">
+  <label>Take Profit (pips)</label>
+  <input type="number" id="takeProfit" />
 
-      <label>Auto Risk:</label>
-      <select id="autoRisk">
-        <option value="false">Off</option>
-        <option value="true">On</option>
-      </select>
+  <label>Auto Risk</label>
+  <select id="autoRisk">
+    <option value="true">Enabled</option>
+    <option value="false">Disabled</option>
+  </select>
 
-      <label>EA Status:</label>
-      <select id="isActive">
-        <option value="true">Running</option>
-        <option value="false">Paused</option>
-      </select>
+  <button onclick="saveSettings()">Save Settings</button>
+  <button class="logout" onclick="logout()">Logout</button>
 
-      <button onclick="saveSettings()">Save Changes</button>
-    </div>
-
-    <p id="statusMsg"></p>
-  </div>
+  <p id="status"></p>
 
   <script>
-    const supabaseUrl = "https://gqtfbteiocwzievktwej.supabase.co";
-    const supabaseApiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxdGZidGVpb2N3emlldmt0d2VqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NjA1NTMsImV4cCI6MjA2NzAzNjU1M30.FnvC_rBqdflL1zjNuYXK5-FIXLGKXs8eAFm7WwtKQ_c";
+    const SUPABASE_URL = "https://gqtfbteiocwzievktwej.supabase.co";
+    const SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxdGZidGVpb2N3emlldmt0d2VqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NjA1NTMsImV4cCI6MjA2NzAzNjU1M30.FnvC_rBqdflL1zjNuYXK5-FIXLGKXs8eAFm7WwtKQ_c";
 
-    async function validateLicense() {
-      const key = document.getElementById("licenseKey").value.trim();
-      if (!key) return alert("Enter a license key");
+    const licenseKey = localStorage.getItem("licenseKey");
+    const status = document.getElementById("status");
 
-      const { data, error } = await fetch(`${supabaseUrl}/rest/v1/ea_settings?license_key=eq.${key}`, {
-        headers: {
-          "apikey": supabaseApiKey,
-          "Authorization": `Bearer ${supabaseApiKey}`,
-          "Content-Type": "application/json"
+    if (!licenseKey) {
+      alert("No license key found. Redirecting to activation...");
+      window.location.href = "index.html";
+    }
+
+    async function loadSettings() {
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/ea_settings?license_key=eq.${licenseKey}`, {
+          headers: {
+            apikey: SUPABASE_API_KEY,
+            Authorization: `Bearer ${SUPABASE_API_KEY}`,
+            "Content-Type": "application/json",
+          }
+        });
+
+        const data = await response.json();
+        if (data.length > 0) {
+          const settings = data[0];
+          document.getElementById("lotSize").value = settings.lot_size || 0.1;
+          document.getElementById("stopLoss").value = settings.stop_loss || 20;
+          document.getElementById("takeProfit").value = settings.take_profit || 40;
+          document.getElementById("autoRisk").value = String(settings.auto_risk);
+        } else {
+          status.textContent = "No EA settings found for this license.";
         }
-      }).then(res => res.json().then(json => ({ data: json, error: null })))
-        .catch(err => ({ data: null, error: err }));
-
-      if (error || !data || data.length === 0) {
-        document.getElementById("statusMsg").innerText = "License not found or invalid.";
-        return;
+      } catch (err) {
+        console.error(err);
+        status.textContent = "Error loading settings.";
       }
-
-      const settings = data[0];
-      document.getElementById("lotSize").value = settings.lot_size;
-      document.getElementById("stopLoss").value = settings.stop_loss;
-      document.getElementById("takeProfit").value = settings.take_profit;
-      document.getElementById("autoRisk").value = settings.auto_risk;
-      document.getElementById("isActive").value = settings.is_active;
-      document.getElementById("settingsForm").classList.remove("hidden");
-      document.getElementById("statusMsg").innerText = "Settings loaded.";
     }
 
     async function saveSettings() {
-      const key = document.getElementById("licenseKey").value.trim();
-      const updates = {
+      const payload = {
+        license_key: licenseKey,
         lot_size: parseFloat(document.getElementById("lotSize").value),
-        stop_loss: parseFloat(document.getElementById("stopLoss").value),
-        take_profit: parseFloat(document.getElementById("takeProfit").value),
+        stop_loss: parseInt(document.getElementById("stopLoss").value),
+        take_profit: parseInt(document.getElementById("takeProfit").value),
         auto_risk: document.getElementById("autoRisk").value === "true",
-        is_active: document.getElementById("isActive").value === "true",
-        updated_at: new Date().toISOString()
       };
 
-      const { error } = await fetch(`${supabaseUrl}/rest/v1/ea_settings?license_key=eq.${key}`, {
-        method: "PATCH",
-        headers: {
-          "apikey": supabaseApiKey,
-          "Authorization": `Bearer ${supabaseApiKey}`,
-          "Content-Type": "application/json",
-          "Prefer": "return=minimal"
-        },
-        body: JSON.stringify(updates)
-      });
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/ea_settings`, {
+          method: "POST",
+          headers: {
+            apikey: SUPABASE_API_KEY,
+            Authorization: `Bearer ${SUPABASE_API_KEY}`,
+            "Content-Type": "application/json",
+            Prefer: "resolution=merge-duplicates"
+          },
+          body: JSON.stringify(payload)
+        });
 
-      if (error) {
-        document.getElementById("statusMsg").innerText = "Failed to save settings.";
-      } else {
-        document.getElementById("statusMsg").innerText = "Settings saved successfully!";
+        if (response.ok) {
+          status.textContent = "Settings saved successfully!";
+        } else {
+          status.textContent = "Failed to save settings.";
+        }
+      } catch (err) {
+        console.error(err);
+        status.textContent = "Error saving settings.";
       }
     }
+
+    function logout() {
+      localStorage.removeItem("licenseKey");
+      window.location.href = "index.html";
+    }
+
+    loadSettings();
   </script>
 </body>
 </html>
