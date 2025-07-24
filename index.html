@@ -3,78 +3,92 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>EA License Activation</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <title>FLASH THE BOT - License Activation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    input {
+      padding: 10px;
+      width: 300px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #22c55e;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #status {
+      margin-top: 15px;
+      font-weight: bold;
+      color: #fbbf24;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<body>
 
-  <div class="bg-white p-8 rounded shadow-md w-full max-w-md">
-    <h1 class="text-2xl font-bold mb-4 text-center">Activate Your EA</h1>
+  <h1>FLASH THE BOT</h1>
+  <input type="text" id="license_key" placeholder="Enter your license key" />
+  <button onclick="validateLicense()">Activate</button>
+  <p id="status"></p>
 
-    <div class="mb-4">
-      <label for="license_key" class="block text-sm font-medium text-gray-700 mb-1">License Key</label>
-      <input type="text" id="license_key" class="w-full px-4 py-2 border border-gray-300 rounded" placeholder="Enter your license key" />
-    </div>
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-    <button onclick="validateLicense()" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
-      Activate
-    </button>
-
-    <p id="status" class="text-center text-sm text-red-600 mt-3"></p>
-  </div>
-
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script>
     const supabaseUrl = "https://gqtfbteiocwzievktwej.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxdGZidGVpb2N3emlldmt0d2VqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NjA1NTMsImV4cCI6MjA2NzAzNjU1M30.FnvC_rBqdflL1zjNuYXK5-FIXLGKXs8eAFm7WwtKQ_c";
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // Fallback valid license keys
-    const hardcodedKeys = [
-      "LICENSE-KEY-001",
-      "FLASH-BOT-ABC123",
-      "DEMO-KEY-XYZ"
-    ];
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    async function validateLicense() {
-      const licenseKey = document.getElementById("license_key").value.trim();
+    window.validateLicense = async function () {
+      const licenseInput = document.getElementById("license_key");
+      const licenseKey = licenseInput.value.trim();
       const status = document.getElementById("status");
 
       if (!licenseKey) {
-        status.textContent = "Please enter a license key.";
+        status.textContent = "⚠️ Please enter a license key.";
         return;
       }
 
-      status.textContent = "Validating...";
+      status.textContent = "🔄 Validating license...";
 
       try {
         const { data, error } = await supabase
           .from("licenses")
           .select("*")
-          .eq("license_key", licenseKey)
+          .eq("key", licenseKey)
           .eq("is_valid", true)
           .single();
 
         if (data) {
           localStorage.setItem("license_key", licenseKey);
           window.location.href = "dashboard.html";
-        } else if (hardcodedKeys.includes(licenseKey)) {
-          localStorage.setItem("license_key", licenseKey);
-          window.location.href = "dashboard.html";
         } else {
-          status.textContent = "❌ Invalid license key. Please try again.";
+          status.textContent = "❌ Invalid or expired license key.";
         }
       } catch (err) {
-        // If Supabase check fails (offline?), fallback to hardcoded list
-        if (hardcodedKeys.includes(licenseKey)) {
-          localStorage.setItem("license_key", licenseKey);
-          window.location.href = "dashboard.html";
-        } else {
-          status.textContent = "❌ Error validating license. Try again later.";
-        }
+        console.error("Supabase Error:", err);
+        status.textContent = "❌ An error occurred. Try again.";
       }
-    }
+    };
   </script>
 </body>
 </html>
