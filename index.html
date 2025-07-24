@@ -2,72 +2,56 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>EA Activation</title>
+  <title>EA License Activation</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-      background: #f0f2f5;
-    }
-    .container {
-      background: white;
-      padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    input {
-      padding: 10px;
-      width: 250px;
-      margin: 10px 0;
-    }
-    button {
-      padding: 10px 20px;
-      background-color: #4caf50;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #45a049;
-    }
-    .message {
-      margin-top: 15px;
-      font-weight: bold;
-    }
+    body { font-family: Arial; text-align: center; padding-top: 50px; }
+    input, button { padding: 10px; font-size: 16px; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Activate Your EA</h2>
-    <input type="text" id="licenseKey" placeholder="Enter License Key" />
-    <br />
-    <button onclick="activateKey()">Activate</button>
-    <div class="message" id="message"></div>
-  </div>
+  <h1>Activate Your EA License</h1>
+  <input type="text" id="licenseKey" placeholder="Enter your license key" />
+  <button onclick="validateLicense()">Activate</button>
+  <p id="status"></p>
 
   <script>
-    const validKeys = ["LICENSE-KEY-001", "FLASH-BOT-ABC123", "DEMO-KEY-XYZ"];
+    const SUPABASE_URL = "https://gqtfbteiocwzievktwej.supabase.co";
+    const SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxdGZidGVpb2N3emlldmt0d2VqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NjA1NTMsImV4cCI6MjA2NzAzNjU1M30.FnvC_rBqdflL1zjNuYXK5-FIXLGKXs8eAFm7WwtKQ_c";
 
-    function activateKey() {
+    async function validateLicense() {
       const key = document.getElementById("licenseKey").value.trim();
-      const messageDiv = document.getElementById("message");
+      const status = document.getElementById("status");
 
-      if (validKeys.includes(key)) {
-        messageDiv.style.color = "green";
-        messageDiv.innerText = "License activated successfully!";
-        setTimeout(() => {
-          window.location.href = "dashboard.html?license=" + key;
-        }, 1000);
-      } else {
-        messageDiv.style.color = "red";
-        messageDiv.innerText = "Invalid license key!";
+      if (!key) {
+        status.textContent = "Please enter a license key.";
+        return;
+      }
+
+      status.textContent = "Validating...";
+
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/licenses?license_key=eq.${key}`, {
+          headers: {
+            apikey: SUPABASE_API_KEY,
+            Authorization: `Bearer ${SUPABASE_API_KEY}`,
+            "Content-Type": "application/json",
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.length > 0) {
+          localStorage.setItem("licenseKey", key);
+          status.textContent = "License valid! Redirecting...";
+          setTimeout(() => {
+            window.location.href = "dashboard.html";
+          }, 1000);
+        } else {
+          status.textContent = "Invalid license key.";
+        }
+      } catch (error) {
+        console.error("Validation error:", error);
+        status.textContent = "An error occurred during validation.";
       }
     }
   </script>
