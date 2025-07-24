@@ -1,64 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Validate License</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EA Activation</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f0f0f0; padding: 40px; }
-    .box {
-      max-width: 400px;
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background: #f0f2f5;
+    }
+    .container {
       background: white;
-      padding: 30px;
-      margin: auto;
-      border-radius: 12px;
+      padding: 2rem;
+      border-radius: 8px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      text-align: center;
     }
-    input, button {
-      width: 100%;
+    input {
       padding: 10px;
-      margin-top: 10px;
+      width: 250px;
+      margin: 10px 0;
     }
-    #message {
-      margin-top: 10px;
-      color: red;
+    button {
+      padding: 10px 20px;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .message {
+      margin-top: 15px;
       font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <div class="box">
-    <h2>Enter License Key</h2>
-    <input type="text" id="licenseKey" placeholder="Enter your license key">
-    <button onclick="validateLicense()">Validate</button>
-    <p id="message"></p>
+  <div class="container">
+    <h2>Activate Your EA</h2>
+    <input type="text" id="licenseKey" placeholder="Enter License Key" />
+    <br />
+    <button onclick="activateKey()">Activate</button>
+    <div class="message" id="message"></div>
   </div>
 
   <script>
-    const supabaseUrl = "https://gqtfbteiocwzievktwej.supabase.co";
-    const supabaseApiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxdGZidGVpb2N3emlldmt0d2VqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NjA1NTMsImV4cCI6MjA2NzAzNjU1M30.FnvC_rBqdflL1zjNuYXK5-FIXLGKXs8eAFm7WwtKQ_c";
+    const validKeys = ["LICENSE-KEY-001", "FLASH-BOT-ABC123", "DEMO-KEY-XYZ"];
 
-    async function validateLicense() {
-      const key = document.getElementById('licenseKey').value.trim();
-      if (!key) {
-        document.getElementById('message').textContent = 'Please enter a license key.';
-        return;
-      }
+    function activateKey() {
+      const key = document.getElementById("licenseKey").value.trim();
+      const messageDiv = document.getElementById("message");
 
-      const { data, error } = await fetch(`${supabaseUrl}/rest/v1/ea_settings?license_key=eq.${key}`, {
-        headers: {
-          'apikey': supabaseApiKey,
-          'Authorization': `Bearer ${supabaseApiKey}`,
-          'Content-Type': 'application/json'
-        }
-      }).then(res => res.json().then(json => ({ data: json, error: null })))
-        .catch(err => ({ data: null, error: err }));
-
-      if (data && data.length > 0) {
-        // Store license key in localStorage for dashboard use
-        localStorage.setItem("licenseKey", key);
-        window.location.href = "dashboard.html";
+      if (validKeys.includes(key)) {
+        messageDiv.style.color = "green";
+        messageDiv.innerText = "License activated successfully!";
+        setTimeout(() => {
+          window.location.href = "dashboard.html?license=" + key;
+        }, 1000);
       } else {
-        document.getElementById('message').textContent = 'Invalid license key.';
+        messageDiv.style.color = "red";
+        messageDiv.innerText = "Invalid license key!";
       }
     }
+  </script>
+</body>
+</html>
