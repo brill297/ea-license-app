@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Validate License</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: Arial, sans-serif; background: #f0f0f0; padding: 40px; }
+    .box {
+      max-width: 400px;
+      background: white;
+      padding: 30px;
+      margin: auto;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+    }
+    #message {
+      margin-top: 10px;
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Enter License Key</h2>
+    <input type="text" id="licenseKey" placeholder="Enter your license key">
+    <button onclick="validateLicense()">Validate</button>
+    <p id="message"></p>
+  </div>
+
+  <script>
+    const supabaseUrl = "https://gqtfbteiocwzievktwej.supabase.co";
+    const supabaseApiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxdGZidGVpb2N3emlldmt0d2VqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NjA1NTMsImV4cCI6MjA2NzAzNjU1M30.FnvC_rBqdflL1zjNuYXK5-FIXLGKXs8eAFm7WwtKQ_c";
+
+    async function validateLicense() {
+      const key = document.getElementById('licenseKey').value.trim();
+      if (!key) {
+        document.getElementById('message').textContent = 'Please enter a license key.';
+        return;
+      }
+
+      const { data, error } = await fetch(`${supabaseUrl}/rest/v1/ea_settings?license_key=eq.${key}`, {
+        headers: {
+          'apikey': supabaseApiKey,
+          'Authorization': `Bearer ${supabaseApiKey}`,
+          'Content-Type': 'application/json'
+        }
+      }).then(res => res.json().then(json => ({ data: json, error: null })))
+        .catch(err => ({ data: null, error: err }));
+
+      if (data && data.length > 0) {
+        // Store license key in localStorage for dashboard use
+        localStorage.setItem("licenseKey", key);
+        window.location.href = "dashboard.html";
+      } else {
+        document.getElementById('message').textContent = 'Invalid license key.';
+      }
+    }
