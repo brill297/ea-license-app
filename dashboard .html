@@ -1,104 +1,150 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard | Flash The Bot</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EA Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+      max-width: 500px;
+      margin: auto;
+    }
+    h2 { text-align: center; }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-top: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px;
+      background: #007bff;
+      color: white;
+      border: none;
+      width: 100%;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .danger {
+      background: #dc3545;
+    }
+    .success {
+      background: #28a745;
+    }
+  </style>
 </head>
-<body class="bg-dark text-light">
-  <div class="container py-5">
-    <h1 class="mb-4">FLASH THE BOT - Dashboard</h1>
-    <p id="status"></p><form id="eaSettingsForm" style="display: none;">
-  <div class="mb-3">
-    <label for="lotSize" class="form-label">Lot Size</label>
-    <input type="number" class="form-control" id="lotSize" step="0.01">
-  </div>
-  <div class="mb-3">
-    <label for="stopLoss" class="form-label">Stop Loss</label>
-    <input type="number" class="form-control" id="stopLoss">
-  </div>
-  <div class="mb-3">
-    <label for="takeProfit" class="form-label">Take Profit</label>
-    <input type="number" class="form-control" id="takeProfit">
-  </div>
-  <div class="form-check mb-3">
-    <input class="form-check-input" type="checkbox" id="autoRisk">
-    <label class="form-check-label" for="autoRisk">Auto Risk</label>
-  </div>
-  <div class="form-check mb-3">
-    <input class="form-check-input" type="checkbox" id="pauseEA">
-    <label class="form-check-label" for="pauseEA">Pause EA</label>
-  </div>
-  <button type="submit" class="btn btn-primary">Save Settings</button>
-</form>
+<body>
+  <h2>EA Dashboard</h2>
+  <div class="card">
+    <label for="lotSize">Lot Size</label>
+    <input type="number" id="lotSize" step="0.01" />
 
-  </div>  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <script>
-    const SUPABASE_URL = "https://gqtfbteiocwzievktwej.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxdGZidGVpb2N3emlldmt0d2VqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NjA1NTMsImV4cCI6MjA2NzAzNjU1M30.FnvC_rBqdflL1zjNuYXK5-FIXLGKXs8eAFm7WwtKQ_c";
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    <label for="stopLoss">Stop Loss</label>
+    <input type="number" id="stopLoss" step="1" />
 
-    const licenseKey = localStorage.getItem("licenseKey");
-    const status = document.getElementById("status");
-    const form = document.getElementById("eaSettingsForm");
+    <label for="takeProfit">Take Profit</label>
+    <input type="number" id="takeProfit" step="1" />
 
+    <label for="autoRisk">Auto Risk</label>
+    <select id="autoRisk">
+      <option value="true">Enabled</option>
+      <option value="false">Disabled</option>
+    </select>
+
+    <label for="pause">EA Status</label>
+    <select id="paused">
+      <option value="false">Running</option>
+      <option value="true">Paused</option>
+    </select>
+
+    <button onclick="saveSettings()" class="success">Save Settings</button>
+    <button onclick="logout()" class="danger">Logout</button>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://gqtfbteiocwzievktwej.supabase.co';
+    const SUPABASE_API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxdGZidGVpb2N3emlldmt0d2VqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NjA1NTMsImV4cCI6MjA2NzAzNjU1M30.FnvC_rBqdflL1zjNuYXK5-FIXLGKXs8eAFm7WwtKQ_c';
+
+    const licenseKey = localStorage.getItem('licenseKey');
     if (!licenseKey) {
-      window.location.href = "index.html";
-    } else {
-      validateLicense();
+      alert('No license key found. Redirecting...');
+      window.location.href = 'index.html';
     }
 
-    async function validateLicense() {
-      const { data, error } = await supabase
-        .from("licenses")
-        .select("*")
-        .eq("key", licenseKey)
-        .eq("is_valid", true)
-        .single();
+    async function saveSettings() {
+      const lotSize = parseFloat(document.getElementById('lotSize').value);
+      const stopLoss = parseFloat(document.getElementById('stopLoss').value);
+      const takeProfit = parseFloat(document.getElementById('takeProfit').value);
+      const autoRisk = document.getElementById('autoRisk').value === 'true';
+      const paused = document.getElementById('paused').value === 'true';
 
-      if (data) {
-        status.innerText = `License Key: ${licenseKey} ✅`;
-        loadSettings();
-        form.style.display = "block";
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/ea_settings`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_API_KEY,
+          'Authorization': `Bearer ${SUPABASE_API_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify({
+          license_key: licenseKey,
+          lot_size: lotSize,
+          stop_loss: stopLoss,
+          take_profit: takeProfit,
+          auto_risk: autoRisk,
+          paused: paused
+        })
+      });
+
+      if (response.ok) {
+        alert('Settings saved!');
       } else {
-        status.innerText = "Invalid or expired license. Redirecting...";
-        setTimeout(() => window.location.href = "index.html", 3000);
+        alert('Error saving settings.');
       }
     }
 
     async function loadSettings() {
-      const { data } = await supabase
-        .from("ea_settings")
-        .select("*")
-        .eq("license_key", licenseKey)
-        .single();
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/ea_settings?license_key=eq.${licenseKey}`, {
+        headers: {
+          'apikey': SUPABASE_API_KEY,
+          'Authorization': `Bearer ${SUPABASE_API_KEY}`
+        }
+      });
 
-      if (data) {
-        document.getElementById("lotSize").value = data.lot_size;
-        document.getElementById("stopLoss").value = data.stop_loss;
-        document.getElementById("takeProfit").value = data.take_profit;
-        document.getElementById("autoRisk").checked = data.auto_risk;
-        document.getElementById("pauseEA").checked = data.pause_ea;
+      if (response.ok) {
+        const data = await response.json();
+        if (data.length > 0) {
+          const settings = data[0];
+          document.getElementById('lotSize').value = settings.lot_size || 0.1;
+          document.getElementById('stopLoss').value = settings.stop_loss || 20;
+          document.getElementById('takeProfit').value = settings.take_profit || 20;
+          document.getElementById('autoRisk').value = settings.auto_risk ? 'true' : 'false';
+          document.getElementById('paused').value = settings.paused ? 'true' : 'false';
+        }
       }
     }
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const lotSize = parseFloat(document.getElementById("lotSize").value);
-      const stopLoss = parseInt(document.getElementById("stopLoss").value);
-      const takeProfit = parseInt(document.getElementById("takeProfit").value);
-      const autoRisk = document.getElementById("autoRisk").checked;
-      const pauseEA = document.getElementById("pauseEA").checked;
+    function logout() {
+      localStorage.removeItem('licenseKey');
+      window.location.href = 'index.html';
+    }
 
-      await supabase.from("ea_settings").upsert({
-        license_key: licenseKey,
-        lot_size: lotSize,
-        stop_loss: stopLoss,
-        take_profit: takeProfit,
-        auto_risk: autoRisk,
-        pause_ea: pauseEA,
-      });
-
-      alert("Settings saved successfully!");
-    });
-  </script></body>
+    loadSettings();
+  </script>
+</body>
 </html>
